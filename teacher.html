@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>208반 학습 플래너 - 선생님용</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F4F2;
+    --card:#FFFFFF;
+    --border:#E1E1DE;
+    --text:#1C1E22;
+    --muted:#8B8F97;
+    --accent:#2F3A4A;
+    --accent-soft:#EEF1F4;
+    --done-bg:#F0F2F4;
+    --c-meal:#E8B24D;
+    --c-sleep:#7C8798;
+    --c-study:#3E7C59;
+    --c-academy:#3B5B8C;
+    --c-etc:#BCC0C6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:'Noto Sans KR', sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    padding:20px 14px 50px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  .hidden{display:none !important;}
+
+  header{margin-bottom:16px;}
+  .title{font-size:clamp(18px,4vw,21px); font-weight:700; margin:0 0 2px;}
+  .subtitle{font-size:12.5px; color:var(--muted); margin:0;}
+
+  .top-tabs{display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;}
+  .top-tab{
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:7px 14px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer;
+  }
+  .top-tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px;}
+
+  .state-msg{font-size:13px; color:var(--muted); padding:20px 4px; text-align:center;}
+
+  /* Roster table */
+  table.roster{width:100%; border-collapse:collapse;}
+  table.roster th{
+    text-align:left; font-size:11.5px; color:var(--muted); font-weight:600;
+    padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  table.roster td{
+    padding:10px 10px; border-bottom:1px solid var(--accent-soft); font-size:13.5px;
+  }
+  table.roster tr.row-clickable{cursor:pointer;}
+  table.roster tr.row-clickable:hover{background:var(--accent-soft);}
+  .bar-cell{display:flex; align-items:center; gap:8px;}
+  .bar-track{flex:1; height:6px; border-radius:3px; background:var(--accent-soft); overflow:hidden; max-width:120px;}
+  .bar-fill{height:100%; background:var(--accent); border-radius:3px;}
+  .pct-text{font-size:11.5px; color:var(--muted); flex:0 0 34px; text-align:right;}
+  .updated{font-size:11.5px; color:var(--muted);}
+
+  /* Detail view */
+  .back-btn{
+    display:inline-flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:7px 12px; font-size:12.5px; font-weight:600; color:var(--text);
+    cursor:pointer; margin-bottom:14px;
+  }
+  .detail-name{font-size:16px; font-weight:700; margin:0 0 14px;}
+
+  .week-tabs{display:flex; gap:6px; overflow-x:auto; padding:2px 2px 12px; border-bottom:1px solid var(--border); margin-bottom:14px;}
+  .week-tab{flex:0 0 auto; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap;}
+  .week-tab .range{display:block; font-weight:400; font-size:10.5px; margin-top:2px; opacity:.8;}
+  .week-tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .goal-row{margin-bottom:16px;}
+  .goal-row label{display:block; font-size:11.5px; color:var(--muted); font-weight:600; margin-bottom:5px;}
+  .goal-box{border:1px solid var(--border); border-radius:8px; background:var(--bg); padding:9px 10px; font-size:14px; font-weight:500; min-height:18px;}
+  .goal-box.empty{color:var(--muted); font-weight:400;}
+
+  .day-tabs{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:16px;}
+  .day-tab{background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:6px 2px 7px; text-align:center; cursor:pointer;}
+  .day-tab .dname{font-size:13px; font-weight:600; display:block;}
+  .day-tab .ddate{font-size:9.5px; color:var(--muted); display:block; margin-top:1px;}
+  .day-tab .dcount{font-size:9px; color:var(--muted); display:block; margin-top:3px;}
+  .day-tab.active{background:var(--accent); border-color:var(--accent);}
+  .day-tab.active .dname, .day-tab.active .ddate, .day-tab.active .dcount{color:#fff;}
+
+  .progress-wrap{margin-bottom:16px;}
+  .progress-label{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .progress-label .day-title{font-size:14px; font-weight:700;}
+  .progress-label .count{font-size:12px; color:var(--muted);}
+  .progress-track{position:relative; height:6px; border-radius:3px; background:var(--accent-soft); overflow:hidden;}
+  .progress-track .fill{position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:3px;}
+
+  .time-list{display:flex; flex-direction:column; gap:5px;}
+  .slot-row{display:flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:6px 10px;}
+  .slot-row.done{background:var(--done-bg); border-color:#D7DCE1;}
+  .slot-row .time{flex:0 0 44px; font-size:11.5px; font-weight:600; color:var(--muted);}
+  .slot-row .content{flex:1; font-size:13px;}
+  .slot-row .content .cat{font-weight:600;}
+  .slot-row .content .subj{color:var(--muted); margin-left:4px;}
+  .slot-row .content.empty{color:var(--muted); font-weight:400;}
+  .slot-row .check{flex:0 0 20px; height:20px; border-radius:5px; border:1.5px solid var(--border); background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff;}
+  .slot-row.done .check{background:var(--accent); border-color:var(--accent);}
+
+  /* Date view */
+  .date-controls{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+  .date-summary{font-size:13.5px; font-weight:700;}
+  .date-summary span{font-weight:400; color:var(--muted); font-size:12px; margin-left:6px;}
+
+  .grid-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:10px;}
+  table.classgrid{border-collapse:collapse; font-size:10.5px;}
+  table.classgrid th, table.classgrid td{border-bottom:1px solid var(--border); border-right:1px solid #ECECE9;}
+  table.classgrid thead th{
+    background:var(--card); color:var(--muted); font-weight:600; padding:5px 2px; text-align:center; font-size:9.5px;
+    position:sticky; top:0; z-index:2;
+  }
+  table.classgrid thead th.hourlabel{border-left:1px solid var(--border);}
+  table.classgrid tbody th{
+    position:sticky; left:0; background:var(--card); z-index:1;
+    text-align:left; padding:6px 10px; font-size:12px; font-weight:600; white-space:nowrap;
+    border-right:1px solid var(--border);
+  }
+  table.classgrid td.cell{width:14px; height:22px; padding:0;}
+  table.classgrid td.cell .fillbox{width:100%; height:100%;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px;}
+  .legend-item{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--muted);}
+  .legend-swatch{width:10px; height:10px; border-radius:2px; display:inline-block;}
+
+  /* Password gate */
+  .hidden{display:none !important;}
+  .gate{max-width:320px; margin:22vh auto 0; text-align:center;}
+  .gate .title{font-size:16px; font-weight:700; margin:0 0 18px;}
+  .gate input{
+    width:100%; border:1px solid var(--border); border-radius:8px; background:var(--card);
+    outline:none; padding:11px 12px; font-family:'Noto Sans KR'; font-weight:500;
+    font-size:14px; color:var(--text); text-align:center; margin-bottom:10px;
+  }
+  .gate input:focus{border-color:var(--accent);}
+  .gate button{
+    width:100%; border:none; border-radius:8px; background:var(--accent); color:#fff;
+    padding:11px 12px; font-family:'Noto Sans KR'; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .gate .err{font-size:12px; color:#B3423A; margin-top:8px; min-height:14px;}
+
+  /* Delete button */
+  .del-btn{
+    border:1px solid var(--border); background:var(--card); color:#B3423A;
+    border-radius:6px; padding:4px 9px; font-size:11px; font-family:'Noto Sans KR';
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <p class="title">208반 선생님용 화면</p>
+  <input id="pwInput" type="password" placeholder="비밀번호" />
+  <button id="pwSubmit">입장하기</button>
+  <p class="err" id="pwErr"></p>
+</div>
+
+<div class="wrap hidden" id="app">
+  <header>
+    <p class="title">208반 여름방학 학습 플래너 — 선생님용</p>
+    <p class="subtitle" id="subtitle">불러오는 중…</p>
+  </header>
+
+  <div class="top-tabs">
+    <div class="top-tab active" id="tabRoster">학생별 보기</div>
+    <div class="top-tab" id="tabDate">날짜별 반 전체 보기</div>
+  </div>
+
+  <!-- 학생별 보기: 목록 -->
+  <div class="card" id="viewRoster">
+    <table class="roster" id="rosterTable">
+      <thead>
+        <tr><th>이름</th><th>4주 전체 완료율</th><th>최근 저장</th><th></th></tr>
+      </thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+    <p class="state-msg hidden" id="rosterEmpty">아직 저장된 학생 데이터가 없어요.</p>
+  </div>
+
+  <!-- 학생별 보기: 상세 -->
+  <div class="card hidden" id="viewDetail">
+    <div class="back-btn" id="backToRoster">← 목록으로</div>
+    <p class="detail-name" id="detailName"></p>
+
+    <div class="week-tabs" id="dWeekTabs"></div>
+    <div class="goal-row">
+      <label>이번 주 목표</label>
+      <div class="goal-box" id="dGoalBox"></div>
+    </div>
+    <div class="day-tabs" id="dDayTabs"></div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span class="day-title" id="dDayTitle"></span>
+        <span class="count" id="dDayCount"></span>
+      </div>
+      <div class="progress-track"><div class="fill" id="dProgressFill" style="width:0%"></div></div>
+    </div>
+    <div class="time-list" id="dTimeList"></div>
+  </div>
+
+  <!-- 날짜별 반 전체 보기 -->
+  <div class="card hidden" id="viewDate">
+    <div class="date-controls">
+      <div class="week-tabs" id="gWeekTabs" style="margin-bottom:0; border-bottom:none; padding-bottom:0;"></div>
+      <div class="day-tabs" id="gDayTabs" style="margin-bottom:0;"></div>
+    </div>
+    <p class="date-summary" id="gSummary"></p>
+    <div class="grid-scroll">
+      <table class="classgrid" id="classGrid"></table>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--c-meal)"></span>식사</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--c-sleep)"></span>수면</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--c-study)"></span>자습</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--c-academy)"></span>학원</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--c-etc)"></span>기타</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#fff;border:1px solid var(--border)"></span>미입력</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ====== 배포 시 이 주소를 Apps Script 웹 앱 URL로 바꾸세요 (학생용과 동일한 주소) ======
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwL_IbobzQemL8DXxdlGkNX1MCz5bPYH-bBZ4U6zgaPVPNbenUp-Kw0uTKPPS_QBxwT/exec";
+  // =====================================================================
+
+  const dayNames = ["월","화","수","목","금","토","일"];
+  const weeksMeta = {
+    1:{label:"1주차", short:"7/20~7/26", dates:["07-20","07-21","07-22","07-23","07-24","07-25","07-26"]},
+    2:{label:"2주차", short:"7/27~8/2",  dates:["07-27","07-28","07-29","07-30","07-31","08-01","08-02"]},
+    3:{label:"3주차", short:"8/3~8/9",   dates:["08-03","08-04","08-05","08-06","08-07","08-08","08-09"]},
+    4:{label:"4주차", short:"8/10~8/16", dates:["08-10","08-11","08-12","08-13","08-14","08-15","08-16"]}
+  };
+  const CATEGORY_COLOR = {
+    "식사":"var(--c-meal)", "수면":"var(--c-sleep)", "자습":"var(--c-study)",
+    "학원":"var(--c-academy)", "기타":"var(--c-etc)"
+  };
+  const SUBJECT_CATEGORIES = ["자습","학원"];
+
+  function genTimes(){
+    const arr=[];
+    for(let h=8; h<=23; h++){
+      arr.push(String(h).padStart(2,'0')+":00");
+      arr.push(String(h).padStart(2,'0')+":30");
+    }
+    return arr;
+  }
+  const TIMES = genTimes();
+
+  function defaultData(){
+    const weeks={};
+    for(let w=1; w<=4; w++){
+      const days={};
+      dayNames.forEach(d=>{
+        const slots={};
+        TIMES.forEach(t=>{ slots[t]={category:"", subject:"", done:false}; });
+        days[d]=slots;
+      });
+      weeks[w]={goal:"", days};
+    }
+    return {weeks};
+  }
+
+  function mergeIntoDefault(parsed){
+    const fresh = defaultData();
+    if(!parsed) return fresh;
+    for(let w=1; w<=4; w++){
+      if(parsed.weeks && parsed.weeks[w]){
+        fresh.weeks[w].goal = parsed.weeks[w].goal || "";
+        dayNames.forEach(d=>{
+          if(parsed.weeks[w].days && parsed.weeks[w].days[d]){
+            TIMES.forEach(t=>{
+              const src = parsed.weeks[w].days[d][t];
+              if(src){
+                fresh.weeks[w].days[d][t] = {
+                  category: src.category || "", subject: src.subject || "", done: !!src.done
+                };
+              }
+            });
+          }
+        });
+      }
+    }
+    return fresh;
+  }
+
+  function dateLabel(w, idx){
+    const d = weeksMeta[w].dates[idx];
+    const parts = d.split('-');
+    return parts[0] + "/" + parts[1];
+  }
+  function fmtTimestamp(v){
+    if(!v) return "-";
+    const d = new Date(v);
+    if(isNaN(d)) return "-";
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return mm+"/"+dd+" "+hh+":"+mi;
+  }
+
+  let roster = []; // [{name, data, updatedAt}]
+  let detailState = { week:1, day:"월" };
+  let gridState = { week:1, day:"월" };
+
+  async function loadRoster(){
+    const res = await fetch(WEBAPP_URL);
+    const json = await res.json();
+    roster = (Array.isArray(json) ? json : []).map(r=>({
+      name: r.name, data: mergeIntoDefault(r.data), updatedAt: r.updatedAt
+    }));
+  }
+
+  function overallPct(d){
+    let done=0, total=0;
+    for(let w=1; w<=4; w++){
+      dayNames.forEach(day=>{
+        TIMES.forEach(t=>{
+          total++;
+          if(d.weeks[w].days[day][t].done) done++;
+        });
+      });
+    }
+    return total ? Math.round((done/total)*100) : 0;
+  }
+
+  /* ---------- Top tabs ---------- */
+  document.getElementById('tabRoster').onclick = ()=> switchTop('roster');
+  document.getElementById('tabDate').onclick = ()=> switchTop('date');
+
+  function switchTop(which){
+    document.getElementById('tabRoster').classList.toggle('active', which==='roster');
+    document.getElementById('tabDate').classList.toggle('active', which==='date');
+    document.getElementById('viewRoster').classList.toggle('hidden', which!=='roster');
+    document.getElementById('viewDetail').classList.add('hidden');
+    document.getElementById('viewDate').classList.toggle('hidden', which!=='date');
+    if(which==='date') renderGrid();
+  }
+
+  /* ---------- Roster ---------- */
+  function renderRoster(){
+    const body = document.getElementById('rosterBody');
+    body.innerHTML = '';
+    document.getElementById('rosterEmpty').classList.toggle('hidden', roster.length>0);
+    roster
+      .slice()
+      .sort((a,b)=> a.name < b.name ? -1 : (a.name > b.name ? 1 : 0))
+      .forEach(student=>{
+        const pct = overallPct(student.data);
+        const tr = document.createElement('tr');
+        tr.className = 'row-clickable';
+        tr.innerHTML =
+          '<td>'+student.name+'</td>'+
+          '<td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><span class="pct-text">'+pct+'%</span></div></td>'+
+          '<td class="updated">'+fmtTimestamp(student.updatedAt)+'</td>'+
+          '<td></td>';
+        tr.onclick = ()=> openDetail(student);
+        const delTd = tr.querySelector('td:last-child');
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del-btn';
+        delBtn.textContent = '삭제';
+        delBtn.onclick = (e)=>{
+          e.stopPropagation();
+          deleteStudent(student.name);
+        };
+        delTd.appendChild(delBtn);
+        body.appendChild(tr);
+      });
+  }
+
+  async function deleteStudent(name){
+    if(!confirm(name+' 학생 데이터를 삭제할까요? 되돌릴 수 없어요.')) return;
+    try{
+      await fetch(WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "delete", name: name })
+      });
+      await loadRoster();
+      renderRoster();
+    }catch(e){
+      alert('삭제에 실패했어요. 다시 시도해주세요.');
+      console.error(e);
+    }
+  }
+
+  /* ---------- Detail ---------- */
+  function openDetail(student){
+    document.getElementById('viewRoster').classList.add('hidden');
+    document.getElementById('viewDate').classList.add('hidden');
+    document.getElementById('viewDetail').classList.remove('hidden');
+    document.getElementById('detailName').textContent = student.name;
+    detailState = { week:1, day:"월", student };
+    renderDetail();
+  }
+  document.getElementById('backToRoster').onclick = ()=>{
+    document.getElementById('viewDetail').classList.add('hidden');
+    document.getElementById('viewRoster').classList.remove('hidden');
+  };
+
+  function renderDetail(){
+    const student = detailState.student;
+    const d = student.data;
+
+    // week tabs
+    const wEl = document.getElementById('dWeekTabs');
+    wEl.innerHTML = '';
+    for(let w=1; w<=4; w++){
+      const btn = document.createElement('div');
+      btn.className = 'week-tab' + (detailState.week===w?' active':'');
+      btn.innerHTML = weeksMeta[w].label + '<span class="range">'+weeksMeta[w].short+'</span>';
+      btn.onclick = ()=>{ detailState.week=w; detailState.day="월"; renderDetail(); };
+      wEl.appendChild(btn);
+    }
+
+    // goal
+    const goalBox = document.getElementById('dGoalBox');
+    const goal = d.weeks[detailState.week].goal;
+    goalBox.textContent = goal || "입력한 목표가 없어요";
+    goalBox.classList.toggle('empty', !goal);
+
+    // day tabs
+    const dEl = document.getElementById('dDayTabs');
+    dEl.innerHTML = '';
+    dayNames.forEach((day, idx)=>{
+      const done = TIMES.filter(t=>d.weeks[detailState.week].days[day][t].done).length;
+      const wrap = document.createElement('div');
+      wrap.className = 'day-tab' + (detailState.day===day?' active':'');
+      wrap.innerHTML =
+        '<span class="dname">'+day+'</span>'+
+        '<span class="ddate">'+dateLabel(detailState.week, idx)+'</span>'+
+        '<span class="dcount">'+done+'/'+TIMES.length+'</span>';
+      wrap.onclick = ()=>{ detailState.day=day; renderDetail(); };
+      dEl.appendChild(wrap);
+    });
+
+    // progress
+    const done = TIMES.filter(t=>d.weeks[detailState.week].days[detailState.day][t].done).length;
+    const pct = Math.round((done/TIMES.length)*100);
+    const idx = dayNames.indexOf(detailState.day);
+    document.getElementById('dDayTitle').textContent = detailState.day+'요일 ('+dateLabel(detailState.week, idx)+')';
+    document.getElementById('dDayCount').textContent = done+' / '+TIMES.length+' 완료';
+    document.getElementById('dProgressFill').style.width = pct+'%';
+
+    // time list
+    const listEl = document.getElementById('dTimeList');
+    listEl.innerHTML = '';
+    const slots = d.weeks[detailState.week].days[detailState.day];
+    TIMES.forEach(t=>{
+      const slot = slots[t];
+      const row = document.createElement('div');
+      row.className = 'slot-row' + (slot.done?' done':'');
+      let contentHtml;
+      if(slot.category){
+        contentHtml = '<span class="cat">'+slot.category+'</span>' + (slot.subject ? '<span class="subj">· '+slot.subject+'</span>' : '');
+      } else {
+        contentHtml = '';
+      }
+      row.innerHTML =
+        '<span class="time">'+t+'</span>'+
+        '<span class="content'+(slot.category?'':' empty')+'">'+(contentHtml || '입력 없음')+'</span>'+
+        '<span class="check">'+(slot.done?'✓':'')+'</span>';
+      listEl.appendChild(row);
+    });
+  }
+
+  /* ---------- Date-based class grid ---------- */
+  function renderGridControls(){
+    const wEl = document.getElementById('gWeekTabs');
+    wEl.innerHTML = '';
+    for(let w=1; w<=4; w++){
+      const btn = document.createElement('div');
+      btn.className = 'week-tab' + (gridState.week===w?' active':'');
+      btn.innerHTML = weeksMeta[w].label + '<span class="range">'+weeksMeta[w].short+'</span>';
+      btn.onclick = ()=>{ gridState.week=w; gridState.day="월"; renderGrid(); };
+      wEl.appendChild(btn);
+    }
+    const dEl = document.getElementById('gDayTabs');
+    dEl.innerHTML = '';
+    dayNames.forEach((day, idx)=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'day-tab' + (gridState.day===day?' active':'');
+      wrap.innerHTML =
+        '<span class="dname">'+day+'</span>'+
+        '<span class="ddate">'+dateLabel(gridState.week, idx)+'</span>';
+      wrap.onclick = ()=>{ gridState.day=day; renderGrid(); };
+      dEl.appendChild(wrap);
+    });
+  }
+
+  function renderGrid(){
+    renderGridControls();
+    const idx = dayNames.indexOf(gridState.day);
+    const dateStr = dateLabel(gridState.week, idx);
+
+    let submitted = 0;
+    roster.forEach(s=>{
+      const has = TIMES.some(t=> s.data.weeks[gridState.week].days[gridState.day][t].category);
+      if(has) submitted++;
+    });
+    document.getElementById('gSummary').innerHTML =
+      gridState.day+'요일 ('+dateStr+')<span>학생 '+roster.length+'명 중 '+submitted+'명 입력</span>';
+
+    const table = document.getElementById('classGrid');
+    if(roster.length===0){
+      table.innerHTML = '<tr><td style="padding:16px;color:var(--muted);font-size:12.5px;">아직 저장된 학생 데이터가 없어요.</td></tr>';
+      return;
+    }
+
+    let thead = '<thead><tr><th style="min-width:80px;">이름</th>';
+    for(let h=8; h<=23; h++){
+      thead += '<th class="hourlabel" colspan="2">'+h+'</th>';
+    }
+    thead += '</tr></thead>';
+
+    let tbody = '<tbody>';
+    roster
+      .slice()
+      .sort((a,b)=> a.name < b.name ? -1 : (a.name > b.name ? 1 : 0))
+      .forEach(s=>{
+        tbody += '<tr><th>'+s.name+'</th>';
+        const slots = s.data.weeks[gridState.week].days[gridState.day];
+        TIMES.forEach(t=>{
+          const slot = slots[t];
+          const color = slot.category ? CATEGORY_COLOR[slot.category] : '#fff';
+          const title = slot.category ? (t+' '+slot.category+(slot.subject?' · '+slot.subject:'')) : (t+' 미입력');
+          tbody += '<td class="cell" title="'+title+'"><div class="fillbox" style="background:'+color+'"></div></td>';
+        });
+        tbody += '</tr>';
+      });
+    tbody += '</tbody>';
+
+    table.innerHTML = thead + tbody;
+  }
+
+  /* ---------- Password gate ---------- */
+  const TEACHER_PASSWORD = "208planner";
+  const UNLOCK_KEY = "teacher-unlocked";
+
+  function unlockApp(){
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    init();
+  }
+
+  document.getElementById('pwSubmit').onclick = ()=>{
+    const val = document.getElementById('pwInput').value;
+    if(val === TEACHER_PASSWORD){
+      localStorage.setItem(UNLOCK_KEY, "1");
+      unlockApp();
+    }else{
+      document.getElementById('pwErr').textContent = "비밀번호가 틀렸어요";
+    }
+  };
+  document.getElementById('pwInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') document.getElementById('pwSubmit').click();
+  });
+
+  if(localStorage.getItem(UNLOCK_KEY) === "1"){
+    unlockApp();
+  }
+
+  /* ---------- Init ---------- */
+  async function init(){
+    const sub = document.getElementById('subtitle');
+    try{
+      await loadRoster();
+      sub.textContent = '학생 '+roster.length+'명의 데이터를 불러왔어요';
+      renderRoster();
+    }catch(e){
+      sub.textContent = '데이터를 불러오지 못했어요. WEBAPP_URL 설정을 확인해주세요.';
+      console.error(e);
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>208반 여름방학 학습 플래너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F4F2;
+    --card:#FFFFFF;
+    --border:#E1E1DE;
+    --text:#1C1E22;
+    --muted:#8B8F97;
+    --accent:#2F3A4A;
+    --accent-soft:#EEF1F4;
+    --done-bg:#F0F2F4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:'Noto Sans KR', sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    padding: 20px 12px 50px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  .hidden{display:none !important;}
+
+  /* Name gate */
+  .gate{
+    max-width:360px; margin:18vh auto 0; text-align:center;
+  }
+  .gate .title{font-size:17px; font-weight:700; margin:0 0 18px;}
+  .gate input{
+    width:100%; border:1px solid var(--border); border-radius:8px; background:var(--card);
+    outline:none; padding:11px 12px; font-family:'Noto Sans KR'; font-weight:500;
+    font-size:14px; color:var(--text); text-align:center; margin-bottom:10px;
+  }
+  .gate input:focus{border-color:var(--accent);}
+  .gate button{
+    width:100%; border:none; border-radius:8px; background:var(--accent); color:#fff;
+    padding:11px 12px; font-family:'Noto Sans KR'; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .gate .hint{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6;}
+  .gate .err{font-size:12px; color:#B3423A; margin-top:8px; min-height:14px;}
+
+  header{margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;}
+  .title{
+    font-size:clamp(18px,5vw,21px);
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.3px;
+  }
+  .who{display:flex; align-items:center; gap:8px;}
+  .who .name{font-size:12.5px; color:var(--muted); font-weight:600;}
+  .who button{
+    border:1px solid var(--border); background:var(--card); color:var(--muted);
+    border-radius:6px; font-size:11px; padding:4px 8px; cursor:pointer; font-family:'Noto Sans KR';
+  }
+
+  /* Week tabs */
+  .week-tabs{
+    display:flex; gap:6px; overflow-x:auto; padding:2px 2px 12px;
+    -webkit-overflow-scrolling:touch;
+    border-bottom:1px solid var(--border);
+    margin-bottom:14px;
+  }
+  .week-tabs::-webkit-scrollbar{display:none;}
+  .week-tab{
+    flex:0 0 auto;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 12px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .15s ease;
+  }
+  .week-tab .range{display:block; font-weight:400; font-size:10.5px; margin-top:2px; opacity:.8;}
+  .week-tab.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+
+  /* Goal */
+  .goal-row{margin-bottom:16px;}
+  .goal-row label{
+    display:block; font-size:11.5px; color:var(--muted); font-weight:600; margin-bottom:5px;
+  }
+  .goal-row input{
+    width:100%; border:1px solid var(--border); border-radius:8px; background:var(--bg);
+    outline:none; padding:9px 10px;
+    font-family:'Noto Sans KR'; font-weight:500; font-size:14px; color:var(--text);
+  }
+  .goal-row input:focus{border-color:var(--accent);}
+
+  /* Day tabs */
+  .day-tabs{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:16px;
+  }
+  .day-tab{
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:6px 2px 7px;
+    text-align:center;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .day-tab .dname{font-size:13px; font-weight:600; display:block;}
+  .day-tab .ddate{font-size:9.5px; color:var(--muted); display:block; margin-top:1px;}
+  .day-tab .dcount{font-size:9px; color:var(--muted); display:block; margin-top:3px;}
+  .day-tab.active{
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  .day-tab.active .dname, .day-tab.active .ddate, .day-tab.active .dcount{color:#fff;}
+
+  /* Progress */
+  .progress-wrap{margin-bottom:16px;}
+  .progress-label{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .progress-label .day-title{font-size:14px; font-weight:700;}
+  .progress-label .count{font-size:12px; color:var(--muted);}
+  .progress-track{
+    position:relative; height:6px; border-radius:3px; background:var(--accent-soft); overflow:hidden;
+  }
+  .progress-track .fill{
+    position:absolute; left:0; top:0; bottom:0;
+    background:var(--accent);
+    border-radius:3px;
+    transition:width .25s ease;
+  }
+
+  /* Time list */
+  .time-list{display:flex; flex-direction:column; gap:5px;}
+  .slot-row{
+    display:flex; align-items:center; gap:6px;
+    background:var(--bg); border:1px solid var(--border);
+    border-radius:8px; padding:6px 8px;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .slot-row.done{
+    background:var(--done-bg); border-color:#D7DCE1;
+  }
+  .slot-row .time{
+    flex:0 0 44px; font-size:11.5px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums;
+  }
+  .slot-row select{
+    border:1px solid var(--border); background:#fff; border-radius:6px;
+    font-family:'Noto Sans KR'; font-size:12.5px; color:var(--text);
+    padding:5px 4px; outline:none; min-width:0;
+  }
+  .slot-row .sel-category{flex:0 0 64px;}
+  .slot-row .sel-subject{flex:0 0 64px;}
+  .slot-row .sel-subject.hidden{display:none;}
+  .slot-row .spacer{flex:1;}
+  .slot-row .check{
+    flex:0 0 22px; height:22px; border-radius:5px; border:1.5px solid var(--border);
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:12px; user-select:none; transition:all .15s ease; color:#fff;
+  }
+  .slot-row.done .check{background:var(--accent); border-color:var(--accent);}
+
+  /* Overview */
+  .overview-title{font-size:13px; font-weight:700; margin:0 0 10px; color:var(--muted);}
+  .overview-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; align-items:end; height:64px;}
+  .ov-col{display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; cursor:pointer;}
+  .ov-bar-wrap{flex:1; display:flex; align-items:flex-end; width:50%;}
+  .ov-bar{width:100%; background:var(--accent); border-radius:3px 3px 2px 2px; min-height:2px; transition:height .25s ease; opacity:.85;}
+  .ov-label{font-size:10px; color:var(--muted); margin-top:5px; font-weight:600;}
+
+  .toast{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(20px);
+    background:var(--accent); color:#fff; padding:7px 14px; border-radius:8px;
+    font-size:12px; opacity:0; pointer-events:none; transition:all .2s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <p class="title">208반 여름방학 학습 플래너</p>
+  <input id="nameInput" type="text" placeholder="이름을 입력하세요" maxlength="10" />
+  <button id="nameSubmit">시작하기</button>
+  <p class="err" id="nameErr"></p>
+  <p class="hint">이름을 기준으로 내용이 저장돼요. 다음에 들어올 때도 같은 이름을 입력하면 이어서 쓸 수 있어요.</p>
+</div>
+
+<div class="wrap hidden" id="app">
+  <header>
+    <p class="title">208반 여름방학 학습 플래너</p>
+    <div class="who">
+      <span class="name" id="whoName"></span>
+      <button id="changeName">이름 변경</button>
+    </div>
+  </header>
+
+  <div class="week-tabs" id="weekTabs"></div>
+
+  <div class="card">
+    <div class="goal-row">
+      <label for="goalInput">이번 주 목표</label>
+      <input id="goalInput" type="text" placeholder="이번 주 목표를 입력하세요" />
+    </div>
+
+    <div class="day-tabs" id="dayTabs"></div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span class="day-title" id="dayTitle"></span>
+        <span class="count" id="dayCount"></span>
+      </div>
+      <div class="progress-track">
+        <div class="fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="time-list" id="timeList"></div>
+  </div>
+
+  <div class="card">
+    <p class="overview-title">이번 주 완료 현황</p>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">저장됨</div>
+
+<script>
+(function(){
+  // ====== 배포 시 이 주소를 Apps Script 웹 앱 URL로 바꾸세요 ======
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwL_IbobzQemL8DXxdlGkNX1MCz5bPYH-bBZ4U6zgaPVPNbenUp-Kw0uTKPPS_QBxwT/exec";
+  // ==============================================================
+
+  const dayNames = ["월","화","수","목","금","토","일"];
+  const weeksMeta = {
+    1:{label:"1주차", short:"7/20~7/26", dates:["07-20","07-21","07-22","07-23","07-24","07-25","07-26"]},
+    2:{label:"2주차", short:"7/27~8/2",  dates:["07-27","07-28","07-29","07-30","07-31","08-01","08-02"]},
+    3:{label:"3주차", short:"8/3~8/9",   dates:["08-03","08-04","08-05","08-06","08-07","08-08","08-09"]},
+    4:{label:"4주차", short:"8/10~8/16", dates:["08-10","08-11","08-12","08-13","08-14","08-15","08-16"]}
+  };
+
+  const CATEGORIES = ["식사","수면","자습","학원","기타"];
+  const SUBJECTS = ["국어","수학","영어","사회","과학","기타"];
+  const SUBJECT_CATEGORIES = ["자습","학원"];
+
+  function genTimes(){
+    const arr=[];
+    for(let h=8; h<=23; h++){
+      arr.push(String(h).padStart(2,'0')+":00");
+      arr.push(String(h).padStart(2,'0')+":30");
+    }
+    return arr;
+  }
+  const TIMES = genTimes();
+
+  function defaultData(){
+    const weeks={};
+    for(let w=1; w<=4; w++){
+      const days={};
+      dayNames.forEach(d=>{
+        const slots={};
+        TIMES.forEach(t=>{ slots[t]={category:"", subject:"", done:false}; });
+        days[d]=slots;
+      });
+      weeks[w]={goal:"", days};
+    }
+    return {weeks};
+  }
+
+  function mergeIntoDefault(parsed){
+    const fresh = defaultData();
+    if(!parsed) return fresh;
+    for(let w=1; w<=4; w++){
+      if(parsed.weeks && parsed.weeks[w]){
+        fresh.weeks[w].goal = parsed.weeks[w].goal || "";
+        dayNames.forEach(d=>{
+          if(parsed.weeks[w].days && parsed.weeks[w].days[d]){
+            TIMES.forEach(t=>{
+              const src = parsed.weeks[w].days[d][t];
+              if(src){
+                fresh.weeks[w].days[d][t] = {
+                  category: src.category || "",
+                  subject: src.subject || "",
+                  done: !!src.done
+                };
+              }
+            });
+          }
+        });
+      }
+    }
+    return fresh;
+  }
+
+  let data = defaultData();
+  let state = { week:1, day:"월" };
+  let saveTimer = null;
+  let studentName = "";
+
+  const NAME_KEY = "planner-name";
+
+  /* ---------- Backend ---------- */
+  async function fetchMyData(name){
+    const res = await fetch(WEBAPP_URL + "?name=" + encodeURIComponent(name));
+    const json = await res.json();
+    return json && json.data ? json.data : null;
+  }
+
+  function scheduleSave(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(async ()=>{
+      try{
+        const res = await fetch(WEBAPP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ name: studentName, data: data })
+        });
+        const json = await res.json();
+        if(json && json.status === 'ok'){
+          showToast("저장됨");
+        }else{
+          showToast("저장 실패");
+          console.error("저장 실패 응답:", json);
+        }
+      }catch(e){
+        showToast("저장 실패");
+        console.error("저장 실패(네트워크)", e);
+      }
+    }, 500);
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg || "저장됨";
+    t.style.background = (msg === "저장 실패") ? "#B3423A" : "var(--accent)";
+    t.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(()=>t.classList.remove('show'), 1400);
+  }
+
+  function dateLabel(w, idx){
+    const d = weeksMeta[w].dates[idx];
+    const parts = d.split('-');
+    return parts[0] + "/" + parts[1];
+  }
+
+  function countDone(w, day){
+    const slots = data.weeks[w].days[day];
+    return TIMES.filter(t=>slots[t].done).length;
+  }
+  function countFilled(w, day){
+    const slots = data.weeks[w].days[day];
+    return TIMES.filter(t=>slots[t].category.trim().length>0).length;
+  }
+
+  /* ---------- Week tabs ---------- */
+  function renderWeekTabs(){
+    const el = document.getElementById('weekTabs');
+    el.innerHTML = '';
+    for(let w=1; w<=4; w++){
+      const btn = document.createElement('div');
+      btn.className = 'week-tab' + (state.week===w ? ' active':'');
+      btn.innerHTML = weeksMeta[w].label + '<span class="range">'+weeksMeta[w].short+'</span>';
+      btn.onclick = ()=>{ state.week=w; onWeekOrDayChange(true); };
+      el.appendChild(btn);
+    }
+  }
+
+  /* ---------- Goal ---------- */
+  function renderGoal(){
+    const input = document.getElementById('goalInput');
+    input.value = data.weeks[state.week].goal;
+    input.oninput = (e)=>{
+      data.weeks[state.week].goal = e.target.value;
+      scheduleSave();
+    };
+  }
+
+  /* ---------- Day tabs ---------- */
+  function renderDayTabs(){
+    const el = document.getElementById('dayTabs');
+    el.innerHTML = '';
+    dayNames.forEach((d, idx)=>{
+      const done = countDone(state.week, d);
+      const wrap = document.createElement('div');
+      wrap.className = 'day-tab' + (state.day===d?' active':'');
+      wrap.innerHTML =
+        '<span class="dname">'+d+'</span>'+
+        '<span class="ddate">'+dateLabel(state.week, idx)+'</span>'+
+        '<span class="dcount">'+done+'/'+TIMES.length+'</span>';
+      wrap.onclick = ()=>{ state.day=d; onWeekOrDayChange(false); };
+      el.appendChild(wrap);
+    });
+  }
+
+  /* ---------- Progress ---------- */
+  function renderProgress(){
+    const done = countDone(state.week, state.day);
+    const total = TIMES.length;
+    const pct = Math.round((done/total)*100);
+    const idx = dayNames.indexOf(state.day);
+    document.getElementById('dayTitle').textContent = state.day + '요일 ('+dateLabel(state.week, idx)+')';
+    document.getElementById('dayCount').textContent = done + ' / ' + total + ' 완료';
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  /* ---------- Time list ---------- */
+  function renderTimeList(){
+    const el = document.getElementById('timeList');
+    el.innerHTML = '';
+    const slots = data.weeks[state.week].days[state.day];
+    TIMES.forEach(t=>{
+      const slot = slots[t];
+      const row = document.createElement('div');
+      row.className = 'slot-row' + (slot.done ? ' done' : '');
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'time';
+      timeSpan.textContent = t;
+
+      const catSelect = document.createElement('select');
+      catSelect.className = 'sel-category';
+      catSelect.innerHTML = '<option value="">구분</option>' +
+        CATEGORIES.map(c=>'<option value="'+c+'"'+(slot.category===c?' selected':'')+'>'+c+'</option>').join('');
+
+      const subSelect = document.createElement('select');
+      subSelect.className = 'sel-subject' + (SUBJECT_CATEGORIES.includes(slot.category) ? '' : ' hidden');
+      subSelect.innerHTML = '<option value="">과목</option>' +
+        SUBJECTS.map(s=>'<option value="'+s+'"'+(slot.subject===s?' selected':'')+'>'+s+'</option>').join('');
+
+      function syncDone(){
+        const needsSubject = SUBJECT_CATEGORIES.includes(slot.category);
+        slot.done = slot.category !== "" && (!needsSubject || slot.subject !== "");
+        row.classList.toggle('done', slot.done);
+        check.textContent = slot.done ? '✓' : '';
+        renderProgress();
+        renderOverview();
+      }
+
+      catSelect.onchange = (e)=>{
+        slot.category = e.target.value;
+        if(!SUBJECT_CATEGORIES.includes(slot.category)){
+          slot.subject = "";
+          subSelect.value = "";
+          subSelect.classList.add('hidden');
+        }else{
+          subSelect.classList.remove('hidden');
+        }
+        syncDone();
+        scheduleSave();
+        renderDayTabs();
+      };
+
+      subSelect.onchange = (e)=>{
+        slot.subject = e.target.value;
+        syncDone();
+        scheduleSave();
+      };
+
+      const spacer = document.createElement('div');
+      spacer.className = 'spacer';
+
+      const check = document.createElement('div');
+      check.className = 'check';
+      check.textContent = slot.done ? '✓' : '';
+
+      row.appendChild(timeSpan);
+      row.appendChild(catSelect);
+      row.appendChild(subSelect);
+      row.appendChild(spacer);
+      row.appendChild(check);
+      el.appendChild(row);
+    });
+  }
+
+  /* ---------- Overview ---------- */
+  function renderOverview(){
+    const el = document.getElementById('overviewGrid');
+    el.innerHTML = '';
+    dayNames.forEach((d)=>{
+      const done = countDone(state.week, d);
+      const pct = Math.max((done/TIMES.length)*100, 2);
+      const col = document.createElement('div');
+      col.className = 'ov-col';
+      col.innerHTML =
+        '<div class="ov-bar-wrap"><div class="ov-bar" style="height:'+pct+'%"></div></div>'+
+        '<div class="ov-label">'+d+'</div>';
+      col.onclick = ()=>{ state.day=d; onWeekOrDayChange(false); };
+      el.appendChild(col);
+    });
+  }
+
+  function onWeekOrDayChange(weekChanged){
+    if(weekChanged) state.day = "월";
+    renderWeekTabs();
+    renderGoal();
+    renderDayTabs();
+    renderProgress();
+    renderTimeList();
+    renderOverview();
+  }
+
+  /* ---------- Name gate ---------- */
+  async function enterApp(name){
+    studentName = name;
+    localStorage.setItem(NAME_KEY, name);
+    document.getElementById('whoName').textContent = name + '님';
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+
+    try{
+      const remote = await fetchMyData(name);
+      data = mergeIntoDefault(remote);
+    }catch(e){
+      data = defaultData();
+    }
+    onWeekOrDayChange(false);
+  }
+
+  function showGate(prefill){
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('gate').classList.remove('hidden');
+    document.getElementById('nameInput').value = prefill || "";
+    document.getElementById('nameErr').textContent = "";
+    document.getElementById('nameInput').focus();
+  }
+
+  document.getElementById('nameSubmit').onclick = ()=>{
+    const val = document.getElementById('nameInput').value.trim();
+    if(!val){
+      document.getElementById('nameErr').textContent = "이름을 입력해주세요";
+      return;
+    }
+    enterApp(val);
+  };
+  document.getElementById('nameInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') document.getElementById('nameSubmit').click();
+  });
+  document.getElementById('changeName').onclick = ()=>{
+    showGate(studentName);
+  };
+
+  (function init(){
+    const saved = localStorage.getItem(NAME_KEY);
+    if(saved) enterApp(saved);
+    else showGate("");
+  })();
+})();
+</script>
+</body>
+</html>
